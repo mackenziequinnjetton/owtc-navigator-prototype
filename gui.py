@@ -19,22 +19,9 @@ class Gui:
 
     def __init__(self):
 
-        """# I know embedding the password here commits it to the GitHub 
-        # repository. This will be fixed and the password changed
-        # in a future commit, before the repository goes public.
-        conn = ppg.connect(
-            database='postgres', user='postgres', 
-            password='vYiSKlo8OOYH0PCjIUFI', host='localhost' 
-        )
-        cur = conn.cursor()"""
-
         self.root = tk.Tk()
         self.root.title('Course Timeboxer')
-        # self.root.geometry('350x300')
         self.root.resizable(False, False)
-
-        # self.root.columnconfigure(0, weight=1)
-        # self.root.columnconfigure(1, weight=2)
 
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.grid(column=0, row=0)
@@ -56,7 +43,7 @@ class Gui:
         self.course_options = []
 
         # Retrieves all the table names in the database 
-        # and adds them to self.course_options as selectable options
+        # and adds them to self.course_options as selectable course options
         cur.execute("""SELECT table_name FROM information_schema.tables 
         WHERE table_schema = 'COURSE'""")
         for table_name in cur.fetchall():
@@ -72,9 +59,6 @@ class Gui:
         self.submit_button.grid(column=0, row=2, columnspan=2, pady=10)
 
         self.root.bind('<Return>', self.validate_hours)
-
-        '''cur.close()
-        conn.close()'''
 
         tk.mainloop()
 
@@ -100,27 +84,63 @@ class Gui:
         hour_total = 0
         datetime_now = dt.now()
 
+        # If the current day is a weekend, starts calculating the due date
+        # from midnight on the next Monday
+        if datetime_now.weekday() == 5:
+            datetime_now += rd.relativedelta(days=2)
+            datetime_now = datetime_now.replace(hour=0, minute=0, 
+            second=0, microsecond=0)
+        elif datetime_now.weekday() == 6:
+            datetime_now += rd.relativedelta(days=1)
+            datetime_now = datetime_now.replace(hour=0, minute=0, 
+            second=0, microsecond=0)
+
         for module_tuple in module_list:
             hour_total += module_tuple[1]
 
-        remaining_days = 0
         new_module_list = []
         
         for module_tuple in module_list:
-            weeks_to_complete = math.ceil((module_tuple[1] 
-            + remaining_days) / weekly_hours)
 
-            # The due date for each module is assumed to be the Saturday of 
-            # the week when the module is due
-            week_delta = rd.relativedelta(weeks=weeks_to_complete, 
-            weekday=rd.SA(1))
+            weeks_to_complete = module_tuple[1] / weekly_hours
 
-            new_module_list.append((module_tuple[0], (datetime_now 
-            + week_delta).strftime('%a, %b %w, %Y')))
+            week_delta = rd.relativedelta(weeks=weeks_to_complete)
+            print(f'week_delta.days: {week_delta.days}')
 
-            datetime_now = datetime_now + week_delta
+            due_date = datetime_now + week_delta
+            print(f"Initial due date: {due_date.strftime('%a, %b %#d, %Y')}")
+            
+            # Adds extra days to the due date to ensure the student is not
+            # required to work on weekends
+            '''if week_delta.days < 7 and due_date.day < datetime_now.day:
+                print('Condition 1 triggered')
+                due_date += rd.relativedelta(days=2)
+                print(f"Due date adjusted for passing weekends: {due_date.strftime('%a, %b %#d, %Y')}")
+            else:
+                print('Condition 2 triggered')
+                full_weeks = week_delta.days // 7
+                days_left = week_delta.days % 7
+                due_date += rd.relativedelta(days=2 * full_weeks)
+                if due_date.day + days_left > 6:
+                    print('Condition 3 triggered')
+                    due_date += rd.relativedelta(days=2)
+                print(f"Due date adjusted for passing weekends: {due_date.strftime('%a, %b %#d, %Y')}")'''
+            
+            # If the due date will be on a weekend, moves the due date
+            # to the next Monday
+            '''if due_date.weekday() == 5:
+                due_date += rd.relativedelta(days=2)
+                week_delta += rd.relativedelta(days=2)
+                print(f"Due date adjusted for landing on weekend: {due_date.strftime('%a, %b %#d, %Y')}")
+            elif due_date.weekday() == 6:
+                due_date += rd.relativedelta(days=1)
+                week_delta += rd.relativedelta(days=1)
+                print(f"Due date adjusted for landing on weekend: {due_date.strftime('%a, %b %#d, %Y')}")'''
 
-            remaining_days = (module_tuple[1] + remaining_days) % weekly_hours
+            new_module_list.append((module_tuple[0], due_date
+            .strftime('%a, %b %#d, %Y')))
+
+            datetime_now += week_delta
 
         self.create_schedule_treeview(new_module_list)
 

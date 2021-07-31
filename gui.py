@@ -105,10 +105,8 @@ class Gui:
             weeks_to_complete = module_tuple[1] / weekly_hours
 
             week_delta = rd.relativedelta(weeks=weeks_to_complete)
-            print(f'week_delta.days: {week_delta.days}')
 
             due_date = datetime_now + week_delta
-            print(f"Initial due date: {due_date.strftime('%a, %b %#d, %Y')}")
             
             # Adds extra days to the due date to ensure the student is not
             # required to work on weekends

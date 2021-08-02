@@ -8,6 +8,7 @@ from reportlab.platypus.tables import Table, TableStyle, colors
 from tkcalendar import DateEntry
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
+from babel import numbers
 
 # I know embedding the password here commits it to the GitHub 
 # repository. This will be fixed and the password changed

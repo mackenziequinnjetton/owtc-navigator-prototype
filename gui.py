@@ -44,17 +44,74 @@ class Gui:
         self.start_date_dateentry.grid(column=1, row=0, padx=5, pady=5)
 
         self.hours_label = ttk.Label(self.main_frame, 
+        text='Enter your number of hours enrolled per weekday (0-6):')
+        self.hours_label.grid(column=0, row=1, columnspan=2, pady=(0,5))
+
+        self.weekdays_frame = ttk.Frame(self.main_frame)
+        self.weekdays_frame.grid(column=0, row=2, columnspan=2)
+
+        self.monday_label = ttk.Label(self.weekdays_frame,
+        text = 'M')
+        # self.monday_label.pack(side='left', fill='x')
+        self.monday_label.grid(column=0, row=0)
+
+        self.tuesday_label = ttk.Label(self.weekdays_frame,
+        text = 'T')
+        # self.tuesday_label.pack(side='left', fill='x')
+        self.tuesday_label.grid(column=1, row=0)
+
+        self.wednesday_label = ttk.Label(self.weekdays_frame,
+        text = 'W')
+        # self.wednesday_label.pack(side='left', fill='x')
+        self.wednesday_label.grid(column=2, row=0)
+
+        self.thursday_label = ttk.Label(self.weekdays_frame,
+        text = 'Th')
+        # self.thursday_label.pack(side='left', fill='x')
+        self.thursday_label.grid(column=3, row=0)
+
+        self.friday_label = ttk.Label(self.weekdays_frame,
+        text = 'F')
+        # self.friday_label.pack(side='left', fill='x')
+        self.friday_label.grid(column=4, row=0)
+        
+        self.monday_stringvar = tk.StringVar(value=0)
+        self.monday_spinbox = ttk.Spinbox(self.weekdays_frame, from_=0, 
+        to=6, textvariable=self.monday_stringvar, width=2)
+        self.monday_spinbox.grid(column=0, row=1)
+
+        self.tuesday_stringvar = tk.StringVar(value=0)
+        self.tuesday_spinbox = ttk.Spinbox(self.weekdays_frame, from_=0, 
+        to=6, textvariable=self.tuesday_stringvar, width=2)
+        self.tuesday_spinbox.grid(column=1, row=1, padx=(8,0))
+
+        self.wednesday_stringvar = tk.StringVar(value=0)
+        self.wednesday_spinbox = ttk.Spinbox(self.weekdays_frame, from_=0, 
+        to=6, textvariable=self.wednesday_stringvar, width=2)
+        self.wednesday_spinbox.grid(column=2, row=1, padx=(8,0))
+
+        self.thursday_stringvar = tk.StringVar(value=0)
+        self.thursday_spinbox = ttk.Spinbox(self.weekdays_frame, from_=0, 
+        to=6, textvariable=self.thursday_stringvar, width=2)
+        self.thursday_spinbox.grid(column=3, row=1, padx=(8,0))
+
+        self.friday_stringvar = tk.StringVar(value=0)
+        self.friday_spinbox = ttk.Spinbox(self.weekdays_frame, from_=0, 
+        to=6, textvariable=self.friday_stringvar, width=2)
+        self.friday_spinbox.grid(column=4, row=1, padx=(8,0))
+        
+        '''self.hours_label = ttk.Label(self.main_frame, 
         text='Enter your number of hours\nenrolled per week (from 6 to 30):')
         self.hours_label.grid(column=0, row=1, padx=5, pady=5)
 
         self.hours_stringvar = tk.StringVar(value=30)
         self.hours_spinbox = ttk.Spinbox(self.main_frame, from_=6, 
         to=30, textvariable=self.hours_stringvar)
-        self.hours_spinbox.grid(column=1, row=1, padx=5, pady=5)
+        self.hours_spinbox.grid(column=1, row=1, padx=5, pady=5)'''
 
         self.course_label = ttk.Label(self.main_frame, 
         text='Select your course:')
-        self.course_label.grid(column=0, row=2, padx=5, pady=5)
+        self.course_label.grid(column=0, row=3, padx=5, pady=5)
 
         self.course_stringvar = tk.StringVar(value='')
         self.course_options = []
@@ -69,22 +126,57 @@ class Gui:
         self.course_optionmenu = ttk.OptionMenu(self.main_frame, 
         self.course_stringvar, self.course_options[0], 
         *self.course_options)
-        self.course_optionmenu.grid(column=1, row=2, padx=5, pady=5)
+        self.course_optionmenu.grid(column=1, row=3, padx=5, pady=5)
 
         self.submit_button = ttk.Button(self.main_frame, text='Submit', 
         command=self.validate_input)
-        self.submit_button.grid(column=0, row=3, columnspan=2, pady=10)
+        self.submit_button.grid(column=0, row=4, columnspan=2, pady=10)
 
         self.root.bind('<Return>', self.validate_input)
 
         tk.mainloop()
 
     def validate_input(self, event=True):
+
         if self.start_date_dateentry.get_date().weekday() in {5, 6}:
             mb.showerror('Invalid entry', 
             'Please enter a weekday start date.')
         else:
-            try:
+            weekday_stringvar_list = [self.monday_stringvar.get(), 
+            self.tuesday_stringvar.get(), self.wednesday_stringvar.get(), 
+            self.thursday_stringvar.get(), self.friday_stringvar.get()]
+            
+            continue_sentinel = True
+
+            for i in range(len(weekday_stringvar_list)):
+                try:
+                    int_stringvar = int(weekday_stringvar_list[i])
+                except Exception:
+                    mb.showerror('Invalid entry', 
+                    'Please enter a number of hours between 0 and 6.')
+                    return False
+                else:
+                    weekday_stringvar_list[i] = int_stringvar
+                    if int_stringvar not in range(7):
+                        mb.showerror('Invalid entry',
+                        'Please enter a number of hours between 0 and 6.')
+                        return False
+                
+            if sum(weekday_stringvar_list) not in range(6, 31):
+                mb.showerror('Invalid entry',
+                'Please enter between 6 and 30 hours total.')
+                continue_sentinel = False
+
+            if continue_sentinel:
+
+                # We append two 0's to the end as the hours 
+                # attended on weekends
+                weekday_stringvar_list.append(0)
+                weekday_stringvar_list.append(0)
+
+                self.create_schedule(weekday_stringvar_list)
+            
+            '''try:
                 int(self.hours_stringvar.get())
             except Exception:
                 mb.showerror('Invalid entry', 
@@ -95,14 +187,14 @@ class Gui:
                     mb.showerror('Invalid entry', 
                     'Please select a number of hours between 6 and 30.')
                 else:
-                    self.create_schedule(int(self.hours_stringvar.get()))
+                    self.create_schedule(int(self.hours_stringvar.get()))'''
 
-    def create_schedule(self, weekly_hours):
+    def create_schedule(self, week_schedule):
         cur.execute(f'''select "Name", hours from "COURSE".
         {self.course_stringvar.get().lstrip("('").rstrip("',)")}''')
         
         module_list = cur.fetchall()
-        hour_total = 0
+        # hour_total = 0
         # datetime_now = dt.now()
         start_date = self.start_date_dateentry.get_date()
 
@@ -119,22 +211,70 @@ class Gui:
             second=0, microsecond=0)
         '''
 
-        for module_tuple in module_list:
-            hour_total += module_tuple[1]
+        '''for module_tuple in module_list:
+            hour_total += module_tuple[1]'''
 
+        hours_left_in_day = 0
         new_module_list = []
+        current_day = self.start_date_dateentry.get_date()
         
         for module_tuple in module_list:
+            remaining_module_hours = module_tuple[1]
+            
+            if hours_left_in_day > remaining_module_hours:
+                new_module_list.append((module_tuple[0], current_day
+                .strftime('%a, %b %#d, %Y')))
+                hours_left_in_day -= remaining_module_hours
+                remaining_module_hours = 0
+                continue
+            elif hours_left_in_day == remaining_module_hours:
+                new_module_list.append((module_tuple[0], current_day
+                .strftime('%a, %b %#d, %Y')))
+                hours_left_in_day -= remaining_module_hours
+                remaining_module_hours = 0
+                current_day += rd.relativedelta(days=1)
+                continue
+            elif hours_left_in_day != 0:
+                remaining_module_hours -= hours_left_in_day
+                hours_left_in_day = 0
+                current_day += rd.relativedelta(days=1)
+
+            while True:
+                if (remaining_module_hours 
+                >= week_schedule[current_day.weekday()]):
+                    remaining_module_hours \
+                    -= week_schedule[current_day.weekday()]
+                    if remaining_module_hours == 0:
+                        new_module_list.append((module_tuple[0], current_day
+                        .strftime('%a, %b %#d, %Y')))
+                        break
+                    current_day += rd.relativedelta(days=1)
+                    continue
+                elif remaining_module_hours != 0:
+                    # current_day += rd.relativedelta(days=1)
+                    hours_left_in_day = (week_schedule[current_day.weekday()]
+                    - remaining_module_hours)
+                    remaining_module_hours = 0
+                    new_module_list.append((module_tuple[0], current_day
+                    .strftime('%a, %b %#d, %Y')))
+                    break
+                else:
+                    hours_left_in_day = 0
+                    new_module_list.append((module_tuple[0], current_day
+                    .strftime('%a, %b %#d, %Y')))
+                    break
+        
+        '''for module_tuple in module_list:
 
             weeks_to_complete = module_tuple[1] / weekly_hours
 
             week_delta = rd.relativedelta(weeks=weeks_to_complete)
 
-            due_date = start_date + week_delta
+            due_date = start_date + week_delta'''
             
             # Adds extra days to the due date to ensure the student is not
             # required to work on weekends
-            '''if week_delta.days < 7 and due_date.day < datetime_now.day:
+        '''     if week_delta.days < 7 and due_date.day < datetime_now.day:
                 print('Condition 1 triggered')
                 due_date += rd.relativedelta(days=2)
                 print(f"Due date adjusted for passing weekends: {due_date.strftime('%a, %b %#d, %Y')}")
@@ -150,7 +290,7 @@ class Gui:
             
             # If the due date will be on a weekend, moves the due date
             # to the next Monday
-            '''if due_date.weekday() == 5:
+        '''     if due_date.weekday() == 5:
                 due_date += rd.relativedelta(days=2)
                 week_delta += rd.relativedelta(days=2)
                 print(f"Due date adjusted for landing on weekend: {due_date.strftime('%a, %b %#d, %Y')}")
@@ -159,10 +299,9 @@ class Gui:
                 week_delta += rd.relativedelta(days=1)
                 print(f"Due date adjusted for landing on weekend: {due_date.strftime('%a, %b %#d, %Y')}")'''
 
-            new_module_list.append((module_tuple[0], due_date
-            .strftime('%a, %b %#d, %Y')))
+            
 
-            start_date += week_delta
+            # start_date += week_delta
 
         self.create_schedule_treeview(new_module_list)
 
@@ -187,7 +326,7 @@ class Gui:
             self.schedule_treeview.insert('', tk.END, values=module_tuple)
             self.outer_module_list.append(module_tuple)
 
-        self.schedule_treeview.grid(column=0, row=4, columnspan=2, pady=10)
+        self.schedule_treeview.grid(column=0, row=5, columnspan=2, pady=10)
 
         self.create_pdf_button()
 
@@ -198,8 +337,8 @@ class Gui:
         # Removes the submit button so it can be re-placed
         # beside the new button
         self.submit_button.grid_forget()
-        self.submit_button.grid(column=0, row=3, sticky='EW', padx=(8, 0))
-        self.pdf_button.grid(column=1, row=3, sticky='EW', padx=(0, 8))
+        self.submit_button.grid(column=0, row=4, sticky='EW', padx=(8, 0))
+        self.pdf_button.grid(column=1, row=4, sticky='EW', padx=(0, 8))
 
     def create_pdf(self):
         doc = SimpleDocTemplate('course_timeboxer_report.pdf', 

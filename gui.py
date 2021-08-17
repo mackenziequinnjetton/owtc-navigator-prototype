@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import Menu, ttk
 from tkinter import messagebox as mb
 import psycopg2 as ppg
 from datetime import datetime as dt
@@ -18,6 +18,8 @@ conn = ppg.connect(
     password='vYiSKlo8OOYH0PCjIUFI', host='localhost' 
 )
 cur = conn.cursor()
+
+PROGRAMS = ['Software Technology', 'Software Development']
 
 class Gui:
 
@@ -109,32 +111,65 @@ class Gui:
         to=30, textvariable=self.hours_stringvar)
         self.hours_spinbox.grid(column=1, row=1, padx=5, pady=5)'''
 
+        self.program_label = ttk.Label(self.main_frame,
+        text='Select your program:')
+        self.program_label.grid(column=0, row=3)
+
+        self.program_stringvar = tk.StringVar(value='')
+        self.program_options = PROGRAMS
+
+        self.program_optionmenu = ttk.OptionMenu(self.main_frame, 
+        self.program_stringvar, '', *self.program_options, 
+        command=self.select_program)
+        self.program_optionmenu.grid(column=1, row=3)
+
         self.course_label = ttk.Label(self.main_frame, 
         text='Select your course:')
-        self.course_label.grid(column=0, row=3, padx=5, pady=5)
+        self.course_label.grid(column=0, row=4, padx=5, pady=5)
 
         self.course_stringvar = tk.StringVar(value='')
         self.course_options = []
 
         # Retrieves all the table names in the database 
         # and adds them to self.course_options as selectable course options
-        cur.execute("""SELECT table_name FROM information_schema.tables 
-        WHERE table_schema = 'COURSE'""")
-        for table_name in cur.fetchall():
-            self.course_options.append(table_name)
+        # cur.execute("""SELECT table_name FROM information_schema.tables 
+        # WHERE table_schema = 'COURSE'""")
+        # for table_name in cur.fetchall():
+        #     self.course_options.append(table_name)
 
         self.course_optionmenu = ttk.OptionMenu(self.main_frame, 
-        self.course_stringvar, self.course_options[0], 
-        *self.course_options)
-        self.course_optionmenu.grid(column=1, row=3, padx=5, pady=5)
+        self.course_stringvar, '', *self.course_options)
+        self.course_optionmenu.grid(column=1, row=4, padx=5, pady=5)
 
         self.submit_button = ttk.Button(self.main_frame, text='Submit', 
         command=self.validate_input)
-        self.submit_button.grid(column=0, row=4, columnspan=2, pady=10)
+        self.submit_button.grid(column=0, row=5, columnspan=2, pady=10)
 
         self.root.bind('<Return>', self.validate_input)
 
         tk.mainloop()
+
+    def select_program(self, program_stringvar):
+        for program in PROGRAMS:
+            if program_stringvar == program:
+                cur.execute(f"""SELECT table_name FROM 
+                information_schema.tables WHERE 
+                table_schema='{program}'""")
+        
+        # Resets the list contents, in case a different program is selected
+        self.course_options = []
+        
+        for table_tuple in cur.fetchall():
+            self.course_options.append(table_tuple[0])
+        
+        self.update_course_options(self.course_options)
+    
+    def update_course_options(self, course_options):
+        course_menu = self.course_optionmenu['menu']
+        course_menu.delete(0, 'end')
+        for course in course_options:
+            course_menu.add_command(label=course,
+            command=lambda value=course: self.course_stringvar.set(value))
 
     def validate_input(self, event=True):
 
@@ -190,8 +225,7 @@ class Gui:
                     self.create_schedule(int(self.hours_stringvar.get()))'''
 
     def create_schedule(self, week_schedule):
-        cur.execute(f'''select "Name", hours from "COURSE".
-        {self.course_stringvar.get().lstrip("('").rstrip("',)")}''')
+        cur.execute(f'''select "Name", hours from postgres."{self.program_stringvar.get().lstrip("('").rstrip("',)")}"."{self.course_stringvar.get().lstrip("('").rstrip("',)")}"''')
         
         module_list = cur.fetchall()
         # hour_total = 0
@@ -326,7 +360,7 @@ class Gui:
             self.schedule_treeview.insert('', tk.END, values=module_tuple)
             self.outer_module_list.append(module_tuple)
 
-        self.schedule_treeview.grid(column=0, row=5, columnspan=2, pady=10)
+        self.schedule_treeview.grid(column=0, row=6, columnspan=2, pady=10)
 
         self.create_pdf_button()
 
@@ -337,8 +371,8 @@ class Gui:
         # Removes the submit button so it can be re-placed
         # beside the new button
         self.submit_button.grid_forget()
-        self.submit_button.grid(column=0, row=4, sticky='EW', padx=(8, 0))
-        self.pdf_button.grid(column=1, row=4, sticky='EW', padx=(0, 8))
+        self.submit_button.grid(column=0, row=5, sticky='EW', padx=(8, 0))
+        self.pdf_button.grid(column=1, row=5, sticky='EW', padx=(0, 8))
 
     def create_pdf(self):
         doc = SimpleDocTemplate('course_timeboxer_report.pdf', 

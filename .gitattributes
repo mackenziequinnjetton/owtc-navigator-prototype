@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+dist/course_timeboxer.exe filter=lfs diff=lfs merge=lfs -text
+build/course_timeboxer/PKG-00.pkg filter=lfs diff=lfs merge=lfs -text
